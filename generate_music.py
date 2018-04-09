@@ -26,17 +26,10 @@ def random_permutation_of_range(l):
     return dict(zip(x, y))
 
 def generate_music(
-        output_file,
         music_length,
         lengths_distribution,
-        bpm,
+        note_base,
         ):
-    import mingus.core.notes as notes
-    from mingus.containers.note import Note
-    from mingus.containers.track import Track
-    from mingus.midi import midi_file_out
-
-    t = Track()
 
     note_seed = 12
 
@@ -51,12 +44,27 @@ def generate_music(
     for fib_seed, length in zip(gen_fibonacci(), random_lengths(music_length, lengths_distribution)):
 
         note = next_note(fib_seed, note)
+        yield (note + note_base, length)
 
+def generate_and_write_music(
+        output_file,
+        music_length,
+        lengths_distribution,
+        bpm,
+        ):
+    import mingus.core.notes as notes
+    from mingus.containers.note import Note
+    from mingus.containers.track import Track
+    from mingus.midi import midi_file_out
+
+    track = Track()
+
+    for note, length in generate_music(music_length, lengths_distribution, note_base=36):
         n = Note()
-        n.from_int(note + 36)
-        t.add_notes(n, length)
+        n.from_int(note)
+        track.add_notes(n, length)
 
-    midi_file_out.write_Track(output_file, t, bpm=bpm)
+    midi_file_out.write_Track(output_file, track, bpm=bpm)
 
 def main():
     DEFAULT_BPM = 84
@@ -77,7 +85,7 @@ def main():
         (4, 0.3),
     ]
 
-    generate_music(
+    generate_and_write_music(
         output_file=args.output_file,
         music_length=args.length,
         bpm=args.bpm,
