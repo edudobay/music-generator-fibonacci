@@ -25,21 +25,18 @@ def random_permutation_of_range(l):
     np.random.shuffle(y)
     return dict(zip(x, y))
 
-def main():
+def generate_music(
+        output_file,
+        music_length,
+        lengths_distribution,
+        bpm,
+        ):
     import mingus.core.notes as notes
     from mingus.containers.note import Note
     from mingus.containers.track import Track
     from mingus.midi import midi_file_out
 
     t = Track()
-
-    lengths_distribution = [
-        ( 1, 0.3),
-        ( 2, 0.4),
-        ( 4, 0.3),
-    ]
-
-    music_length = 1000
 
     note_seed = 12
 
@@ -51,7 +48,7 @@ def main():
 
     note = note_seed
 
-    for fib_seed, length in zip(gen_fibonacci(), random_lengths(1000, lengths_distribution)):
+    for fib_seed, length in zip(gen_fibonacci(), random_lengths(music_length, lengths_distribution)):
 
         note = next_note(fib_seed, note)
 
@@ -59,8 +56,33 @@ def main():
         n.from_int(note + 36)
         t.add_notes(n, length)
 
-    fname = sys.argv[1]
-    midi_file_out.write_Track(fname, t, bpm=84)
+    midi_file_out.write_Track(output_file, t, bpm=bpm)
+
+def main():
+    DEFAULT_BPM = 84
+    DEFAULT_MUSIC_LENGTH = 1000
+
+    import argparse
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('output_file')
+    parser.add_argument('-b', '--bpm', type=int, default=DEFAULT_BPM)
+    parser.add_argument('-l', '--length', type=int, default=DEFAULT_MUSIC_LENGTH)
+
+    args = parser.parse_args()
+
+    lengths_distribution = [
+        (1, 0.3),
+        (2, 0.4),
+        (4, 0.3),
+    ]
+
+    generate_music(
+        output_file=args.output_file,
+        music_length=args.length,
+        bpm=args.bpm,
+        lengths_distribution=lengths_distribution,
+    )
 
 if __name__ == '__main__':
     main()
